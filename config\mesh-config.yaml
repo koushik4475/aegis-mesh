@@ -1,0 +1,35 @@
+version: "v1"
+mesh:
+  name: "aegis-production-mesh"
+  trust_domain: "cluster.local"
+  cgroup_path: "/sys/fs/cgroup"
+  proxy:
+    listen_port: 15001
+    enforce_mtls: true
+    enforce_tokens: true
+  ebpf:
+    sockops_enabled: true
+    tc_redirect_enabled: true
+    interface: "eth0"
+    log_level: "debug"
+policy:
+  default_action: "deny"
+  rules:
+    - name: "system-probes"
+      paths: ["/healthz", "/livez"]
+      methods: ["GET"]
+      action: "allow"
+      priority: 100
+    - name: "order-management"
+      paths: ["/api/v1/orders/**"]
+      methods: ["GET", "POST"]
+      required_roles: ["order-operator", "mesh-admin"]
+      action: "allow"
+      priority: 50
+    - name: "sensitive-vault-access"
+      paths: ["/vault/**"]
+      methods: ["*"]
+      required_roles: ["vault-admin"]
+      action: "allow"
+      priority: 10
+      rate_limit_rps: 10

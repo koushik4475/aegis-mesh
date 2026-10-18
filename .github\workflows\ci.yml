@@ -1,0 +1,48 @@
+name: Aegis-Mesh CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Verify Code Formatting
+        run: cargo fmt --check
+
+      - name: Run Clippy Linter
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Run Test Suite
+        run: cargo test --verbose
+
+  ebpf-verification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Clang & LLVM for eBPF
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libelf-dev gcc-multilib
+
+      - name: Compile eBPF C Programs
+        run: |
+          clang -O2 -g -target bpf -c bpf/aegis_sockops.bpf.c -o /tmp/aegis_sockops.o
+          clang -O2 -g -target bpf -c bpf/aegis_tc_filter.bpf.c -o /tmp/aegis_tc.o
+          echo "eBPF bytecode compiled and validated successfully."

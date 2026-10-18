@@ -1,0 +1,40 @@
+[package]
+name = "aegis-mesh"
+version = "0.1.0"
+edition = "2021"
+authors = ["koushik4475 <koushik4475@gmail.com>"]
+description = "Zero-Trust Kernel-Enforced API Security Mesh & Sidecar Proxy with eBPF sock_ops and tc redirection"
+license = "Apache-2.0"
+readme = "README.md"
+
+[dependencies]
+tokio = { version = "1.38", features = ["full"] }
+tokio-rustls = "0.26"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
+rustls-pki-types = "1.7"
+rcgen = "0.13"
+hyper = { version = "1.4", features = ["full"] }
+hyper-util = { version = "0.1", features = ["full"] }
+http-body-util = "0.1"
+bytes = "1.6"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+jsonwebtoken = "9.3"
+regex = "1.10"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap = { version = "4.5", features = ["derive"] }
+thiserror = "1.0"
+dashmap = "5.5"
+
+[dev-dependencies]
+reqwest = { version = "0.12", features = ["rustls-tls", "json"], default-features = false }
+
+[[bin]]
+name = "aegis-mesh"
+path = "src/main.rs"
+
+[lib]
+name = "aegis_mesh"
+path = "src/lib.rs"

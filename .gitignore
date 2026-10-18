@@ -1,0 +1,9 @@
+/target
+**/*.rs.bk
+*.o
+*.so
+Cargo.lock
+.idea
+.vscode
+*.swp
+*.log
