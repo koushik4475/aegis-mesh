@@ -1,6 +1,9 @@
 <div align="center">
 
-# 🛡️ Aegis-Mesh
+# Aegis Mesh | Zero-Trust API Security Sidecar with Rust and eBPF
+
+Aegis Mesh is a Rust-based security-mesh prototype for enforcing zero-trust policies around service-to-service API traffic. The README describes an eBPF-assisted sidecar proxy, workload identity, and mTLS-oriented policy enforcement for Linux workloads. It is intended for developers exploring kernel networking, service identity, and API security architecture; validate kernel compatibility and policies in a test environment before deployment.
+
 
 ### Zero-Trust Kernel-Enforced API Security Mesh & Sidecar Proxy with eBPF
 
