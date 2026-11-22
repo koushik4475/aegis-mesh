@@ -100,7 +100,6 @@ mod tests {
             assert!(limiter.check_allowed("client:general", None));
         }
 
-        // Exhausting the general bucket must not consume the policy bucket.
         assert!(!limiter.check_allowed("client:policy:uploads", Some(2)));
         assert!(!limiter.check_allowed("client:general", None));
     }
