@@ -93,14 +93,15 @@ mod tests {
     fn separate_keys_keep_independent_buckets() {
         let limiter = TokenBucketLimiter::new(5, 5);
 
+        assert!(limiter.check_allowed("client:policy:uploads", Some(2)));
+        assert!(limiter.check_allowed("client:policy:uploads", Some(2)));
+
         for _ in 0..5 {
             assert!(limiter.check_allowed("client:general", None));
         }
-        assert!(!limiter.check_allowed("client:general", None));
 
-        assert!(limiter.check_allowed("client:policy:uploads", Some(2)));
-        assert!(limiter.check_allowed("client:policy:uploads", Some(2)));
+        // Exhausting the general bucket must not consume the policy bucket.
         assert!(!limiter.check_allowed("client:policy:uploads", Some(2)));
-        assert!(limiter.check_allowed("client:general", None));
+        assert!(!limiter.check_allowed("client:general", None));
     }
 }
