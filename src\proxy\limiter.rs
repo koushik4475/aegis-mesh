@@ -19,6 +19,12 @@ impl Bucket {
         }
     }
 
+    fn update_limits(&mut self, capacity: f64, refill_rate_per_sec: f64) {
+        self.capacity = capacity;
+        self.refill_rate_per_sec = refill_rate_per_sec;
+        self.tokens = self.tokens.min(capacity);
+    }
+
     fn try_acquire(&mut self, cost: f64) -> bool {
         let now = Instant::now();
         let elapsed = now.duration_since(self.last_update).as_secs_f64();
@@ -61,7 +67,40 @@ impl TokenBucketLimiter {
         let mut entry = self.buckets.entry(key.to_string()).or_insert_with(|| {
             Bucket::new(cap, rps)
         });
+        entry.update_limits(cap, rps);
 
         entry.try_acquire(1.0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn existing_bucket_applies_updated_limits() {
+        let mut bucket = Bucket::new(10.0, 10.0);
+        bucket.tokens = 8.0;
+
+        bucket.update_limits(3.0, 2.0);
+
+        assert_eq!(bucket.capacity, 3.0);
+        assert_eq!(bucket.refill_rate_per_sec, 2.0);
+        assert_eq!(bucket.tokens, 3.0);
+    }
+
+    #[test]
+    fn separate_keys_keep_independent_buckets() {
+        let limiter = TokenBucketLimiter::new(5, 5);
+
+        for _ in 0..5 {
+            assert!(limiter.check_allowed("client:general", None));
+        }
+        assert!(!limiter.check_allowed("client:general", None));
+
+        assert!(limiter.check_allowed("client:policy:uploads", Some(2)));
+        assert!(limiter.check_allowed("client:policy:uploads", Some(2)));
+        assert!(!limiter.check_allowed("client:policy:uploads", Some(2)));
+        assert!(limiter.check_allowed("client:general", None));
     }
 }
