@@ -83,7 +83,7 @@ mod tests {
     #[test]
     fn test_backslash_in_policy_pattern_is_literal_and_cannot_match_everything() {
         let matcher = RouteMatcher::new();
-        assert!(matcher.matches_path(r"/api/\\q", r"/api/\\q"));
-        assert!(!matcher.matches_path(r"/api/\\q", "/unrelated/path"));
+        assert!(matcher.matches_path(r"/api/\q", r"/api/\q"));
+        assert!(!matcher.matches_path(r"/api/\q", "/unrelated/path"));
     }
 }
