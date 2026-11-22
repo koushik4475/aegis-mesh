@@ -4,7 +4,8 @@ use std::sync::RwLock;
 
 /// High-performance compiled regex path matcher
 pub struct RouteMatcher {
-    compiled_patterns: RwLock<HashMap<String, Regex>>,
+    // An invalid pattern is cached as None and must never become a permissive match.
+    compiled_patterns: RwLock<HashMap<String, Option<Regex>>>,
 }
 
 impl RouteMatcher {
@@ -25,7 +26,7 @@ impl RouteMatcher {
         }
 
         let mut lock = self.compiled_patterns.write().unwrap();
-        let regex = lock.entry(pattern.to_string()).or_insert_with(|| {
+        let compiled = lock.entry(pattern.to_string()).or_insert_with(|| {
             let mut regex_str = String::from("^");
             let mut chars = pattern.chars().peekable();
             while let Some(c) = chars.next() {
@@ -38,7 +39,7 @@ impl RouteMatcher {
                             regex_str.push_str("[^/]*");
                         }
                     }
-                    '.' | '+' | '?' | '(' | ')' | '{' | '}' | '[' | ']' | '^' | '$' | '|' => {
+                    '\\' | '.' | '+' | '?' | '(' | ')' | '{' | '}' | '[' | ']' | '^' | '$' | '|' => {
                         regex_str.push('\\');
                         regex_str.push(c);
                     }
@@ -46,10 +47,12 @@ impl RouteMatcher {
                 }
             }
             regex_str.push('$');
-            Regex::new(&regex_str).unwrap_or_else(|_| Regex::new("^.*$").unwrap())
+
+            // Never turn a malformed policy pattern into a match-all expression.
+            Regex::new(&regex_str).ok()
         });
 
-        regex.is_match(path)
+        compiled.as_ref().is_some_and(|regex| regex.is_match(path))
     }
 
     /// Matches HTTP methods (GET, POST, etc.) with wildcard '*' support
@@ -75,5 +78,12 @@ mod tests {
         assert!(matcher.matches_path("/**", "/any/nested/path"));
         assert!(matcher.matches_method(&["GET".into(), "POST".into()], "get"));
         assert!(!matcher.matches_method(&["GET".into()], "DELETE"));
+    }
+
+    #[test]
+    fn test_backslash_in_policy_pattern_is_literal_and_cannot_match_everything() {
+        let matcher = RouteMatcher::new();
+        assert!(matcher.matches_path(r"/api/\\q", r"/api/\\q"));
+        assert!(!matcher.matches_path(r"/api/\\q", "/unrelated/path"));
     }
 }
