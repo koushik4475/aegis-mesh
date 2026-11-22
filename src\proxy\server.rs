@@ -206,7 +206,8 @@ impl AegisProxy {
             }
             PolicyDecision::RateLimit { rule_name, limit_rps } => {
                 let limiter_key = client_sub.unwrap_or_else(|| peer_addr.ip().to_string());
-                if !rate_limiter.check_allowed(&limiter_key, Some(limit_rps)) {
+                let bucket_key = format!("{limiter_key}:policy:{rule_name}");
+                if !rate_limiter.check_allowed(&bucket_key, Some(limit_rps)) {
                     let err_msg = format!(
                         "{{\"error\": \"Too Many Requests\", \"rule\": \"{}\", \"limit_rps\": {}}}\n",
                         rule_name, limit_rps
@@ -221,7 +222,8 @@ impl AegisProxy {
             PolicyDecision::Allow { .. } => {
                 // Check general rate limiter
                 let limiter_key = client_sub.unwrap_or_else(|| peer_addr.ip().to_string());
-                if !rate_limiter.check_allowed(&limiter_key, None) {
+                let bucket_key = format!("{limiter_key}:general");
+                if !rate_limiter.check_allowed(&bucket_key, None) {
                     let err_msg = "{\"error\": \"Too Many Requests\", \"limit\": \"general\"}\n";
                     return Ok(Response::builder()
                         .status(StatusCode::TOO_MANY_REQUESTS)
